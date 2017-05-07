@@ -25,60 +25,7 @@ public:
 		:_root(NULL)
 	{}
 
-	pair<Node*, int> Find(const K& key)
-	{
-		Node* cur = _root;
-		Node* parent = NULL;
-		size_t i = 0;
-		while (cur)
-		{
-			for (i = 0; i < cur->_size; ++i)
-			{
-				if (cur->_keys[i] < key)
-				{
-					++i;
-				}
-				else if(cur->_keys[i] > key)
-				{
-					break;
-				}
-				else
-				{
-					return make_pair(cur, i);
-				}
-			}
-			parent = cur;
-			cur = cur->_Subs[i];
-		}
-		return make_pair(parent, -1);
-	}
-
-	void InsertKey(Node* cur, const K& key, Node* Sub)
-	{
-		assert(cur);
-		int end = cur->_size - 1;
-		for (; end >= 0; --end)
-		{
-			if (cur->_keys[end] < key)
-			{
-				break;
-			}
-			else
-			{
-				cur->_keys[end + 1] = cur->_keys[end];
-				cur->_Subs[end + 2] = cur->_Subs[end + 1];
-			}
-		}
-		cur->_keys[end + 1] = key;
-		cur->_Subs[end + 2] = Sub;
-		if (Sub)
-		{
-			Sub->_parent = cur;
-		}
-		cur->_size++;
-	}
-
-	bool Insert(const K& key)
+	bool Insert(const K& key)               //插入
 	{
 		if (_root == NULL)
 		{
@@ -87,8 +34,8 @@ public:
 			_root->_size = 1;
 			return true;
 		}
-		pair<Node*, int> ret = Find(key);
-		if (ret.second >= 0)
+		pair<Node*, int> ret = Find(key);        //查找
+		if (ret.second >= 0)        //key存在
 		{
 			return false;
 		}
@@ -97,11 +44,12 @@ public:
 		Node* Sub = NULL;
 		while(1)
 		{
-			InsertKey(cur, NewKey, Sub);
+			InsertKey(cur, NewKey, Sub);        //将关键字插入合适的位置
 			if (cur->_size < M)
 			{
 				return true;
 			}
+			//分裂
 			Node* NewNode = new Node;
 			size_t index = 0;
 			size_t mid = M / 2;
@@ -123,7 +71,7 @@ public:
 				cur->_Subs[i]->_parent = NewNode;
 			}
 			cur->_size = cur->_size - NewNode->_size - 1;
-			if (cur->_parent == NULL)
+			if (cur->_parent == NULL)           //cur为根节点
 			{
 				_root = new Node;
 				_root->_keys[0] = cur->_keys[mid];
@@ -132,6 +80,7 @@ public:
 				cur->_parent = _root;
 				NewNode->_parent = _root;
 				_root->_size = 1;
+				return true;
 			}
 			else
 			{
@@ -144,25 +93,78 @@ public:
 
 	void InOrder()
 	{
-		return _InOrder(_root);
+		_InOrder(_root);
 		cout << endl;
 	}
 
 protected:
+	pair<Node*, int> Find(const K& key)
+	{
+		Node* cur = _root;
+		Node* parent = NULL;
+		size_t i = 0;
+		while (cur)
+		{
+			for (i = 0; i < cur->_size; )
+			{
+				if (cur->_keys[i] < key)
+				{
+					++i;
+				}
+				else if (cur->_keys[i] > key)
+				{
+					break;
+				}
+				else
+				{
+					return make_pair(cur, i);        //B树中存在key，返回key所在的位置
+				}
+			}
+			parent = cur;
+			cur = cur->_Subs[i];
+		}
+		return make_pair(parent, -1);         //B树中不存在key，返回该插入的地方
+	}
+
+	void InsertKey(Node* cur, const K& key, Node* Sub)
+	{
+		assert(cur);
+		int end = cur->_size - 1;
+		for (; end >= 0; --end)
+		{
+			if (cur->_keys[end] < key)
+			{
+				break;
+			}
+			else      //cur->_keys[end] >= key
+			{
+				cur->_keys[end + 1] = cur->_keys[end];       
+				cur->_Subs[end + 2] = cur->_Subs[end + 1];   //右孩子后移
+			}
+		}
+		cur->_keys[end + 1] = key;
+		cur->_Subs[end + 2] = Sub;
+		if (Sub)
+		{
+			Sub->_parent = cur;
+		}
+		cur->_size++;
+	}
+
 	void _InOrder(Node* root)
 	{
 		if (root == NULL)
 		{
 			return;
 		}
-		for (size_t i = 0; i < root->_size; ++i)
+		size_t i = 0;
+		for (; i < root->_size; ++i)
 		{
-			if (root->_Subs[i])
-			{
-				_InOrder(root->_Subs[i]);
-			}
+			_InOrder(root->_Subs[i]);
+			
 			cout << root->_keys[i] << " ";
 		}
+		_InOrder(root->_Subs[i]);
 	}
 
 protected:
